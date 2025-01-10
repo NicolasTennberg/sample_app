@@ -7,7 +7,7 @@ class User < ApplicationRecord
                       format: { with: VALID_EMAIL_REGEX },
                       uniqueness: { case_sensitive: false }
     has_secure_password
-    validates :password, presence: true, length: { minimum: 6 }
+    validates :password, presence: true, length: { minimum: 6 }, allow_nil: true
   
     class << self
       # Returns the hash digest of the given string.
@@ -23,11 +23,11 @@ class User < ApplicationRecord
     end
   
     # Remembers a user in the database for use in persistent sessions.
-  def remember
-    self.remember_token = User.new_token
-    update_attribute(:remember_digest, User.digest(remember_token))
-    remember_digest
-  end
+    def remember
+        self.remember_token = User.new_token
+        update_attribute(:remember_digest, User.digest(remember_token))
+        remember_digest
+      end
 
   # Returns a session token to prevent session hijacking.
   # We reuse the remember digest for convenience.
