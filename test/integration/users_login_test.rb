@@ -2,25 +2,24 @@ require "test_helper"
 
 class UserLoginTest < ActionDispatch::IntegrationTest
 
-    def setup
-        @user = users(:michael)
-    end
+  def setup
+    @user = users(:michael)
+  end
 
-    test "login with valid email/invalid password" do
-        get login_path
-        assert_template 'sessions/new'
-        post login_path, params: { session: { email: @user.email, password: "invalid" } }
-        assert_not is_logged_in?
-        assert_response :unprocessable_entity
-        assert_template 'sessions/new'
-        assert_not flash.empty?
-        get root_path
-        assert flash.empty?
-    end
+  test "login with valid email/invalid password" do
+    get login_path
+    assert_template 'sessions/new'
+    post login_path, params: { session: { email: @user.email, password: "invalid" } }
+    assert_not is_logged_in?
+    assert_response :unprocessable_entity
+    assert_template 'sessions/new'
+    assert_not flash.empty?
+    get root_path
+    assert flash.empty?
+  end
 
-    test "login with valid information followed by logout" do
-        post login_path, params: { session: { email: @user.email, password: 'password' } 
-    }
+  test "login with valid information followed by logout" do
+    post login_path, params: { session: { email: @user.email, password: 'password' } }
     assert is_logged_in?
     assert_redirected_to @user
     follow_redirect!
@@ -36,5 +35,22 @@ class UserLoginTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", login_path
     assert_select "a[href=?]", logout_path, count: 0
     assert_select "a[href=?]", user_path(@user), count: 0
-    end
+  end
+end
+
+class RememberingTest < UserLoginTest
+
+  test "login with remembering" do
+    log_in_as(@user, remember_me: '1')
+    assert_equal cookies['remember_token'], @user.remember_token
+end
+
+  test "login without remembering" do
+    # Log in to set the cookie.
+    log_in_as(@user, remember_me: '1')
+    # Log in again and verify that the cookie is deleted.
+    log_in_as(@user, remember_me: '0')
+    @user.reload
+    assert cookies[:remember_token].blank?
+  end
 end
